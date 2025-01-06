@@ -20,19 +20,26 @@
 int c_cd(char **args);
 int c_help(char **args);
 int c_exit(char **args);
+int c_pwd(char **args);
+int c_echo(char **args);
+
 
 /* List of builtin commands */
 char *builtin_str[] = {
   "cd",
   "help",
-  "exit"
+  "exit",
+  "pwd",
+  "echo"
 };
 
 int (*builtin_func[]) (char **) = 
 {
   &c_cd,
   &c_help,
-  &c_exit
+  &c_exit,
+  &c_pwd,
+  &c_echo
 };
 
 int num_builtins() 
@@ -43,7 +50,7 @@ int num_builtins()
 /* Builtin Function Implementations */
 
 /**
- * @brief Bultin Command: change directory
+ * @brief Builtin Command: change directory
  * @param args (args[0] is cd, args[1] is the directory)
  * @return int (returns 1, in order to continue execution)
  */
@@ -64,7 +71,7 @@ int c_cd(char **args)
 }
 
 /**
- * @brief Bultin Command: help/print help
+ * @brief Builtin Command: help/print help
  * @param args (list)
  * @return int (returns 1, in order to continue execution)
  */
@@ -75,7 +82,7 @@ int c_help(char **args)
   printf("Type a program's name and arguments, then press enter \n");
   printf("The following are built in commands:\n");
 
-  for (i = 0; i < lsh_num_builtins(); i++) 
+  for (i = 0; i < num_builtins(); i++) 
   {
     printf("  %s\n", builtin_str[i]);
   }
@@ -85,13 +92,53 @@ int c_help(char **args)
 }
 
 /**
- * @brief Bultin Command: exit
+ * @brief Builtin Command: exit
  * @param args (list)
  * @return int (returns 0 in order to terminate execution)
  */
 int c_exit(char **args)
 {
   return 0;
+}
+
+/**
+ * @brief Builtin Command: print working directory
+ * @param args 
+ * @return int (returns 1, in order to continue execution)
+ */
+int c_pwd(char **args)
+{
+  char cwd[1024];
+
+  if (getcwd(cwd, sizeof(cwd)) != NULL) 
+  {
+    printf("%s\n", cwd);
+  } 
+  else 
+  {
+    perror("getcwd error");
+  }
+  return 1;
+}
+
+/**
+ * @brief Builtin Command: echo - prints arguments provided by user
+ * 
+ * @param args 
+ * @return int (returns 1, in order to continue execution)
+ */
+int c_echo(char **args) 
+{
+  for (int idx = 1; args[idx] != NULL; idx++) 
+  {
+    printf("%s", args[idx]);
+    if (args[idx + 1] != NULL) 
+    {
+      printf(" ");
+    }
+  }
+  printf("\n");
+  return 1;
 }
 
 /**
@@ -144,7 +191,7 @@ int c_execute(char **args)
     return 1;
   }
 
-  for (idx = 0; idx < lsh_num_builtins(); idx++) 
+  for (idx = 0; idx < num_builtins(); idx++) 
   {
     if (strcmp(args[0], builtin_str[idx]) == 0) 
     {
@@ -236,7 +283,7 @@ char **c_split_line(char *line)
             tokens = realloc(tokens, buffersize * sizeof(char*));
             if(!tokens)
             {
-                printf(stderr, " Allocation Error\n");
+                fprintf(stderr, " Allocation Error\n");
                 exit(EXIT_FAILURE);
             }
         }
@@ -258,10 +305,12 @@ void c_loop(void)
 
     do 
     {
-        printf("> ");
+        if (isatty(STDIN_FILENO)) {
+            printf("> ");
+        }
         line = c_read_line();
         args = c_split_line(line);
-        status = c_excecute(args);
+        status = c_execute(args);
 
         free(line);
         free(args);
