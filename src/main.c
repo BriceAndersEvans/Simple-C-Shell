@@ -25,7 +25,8 @@ int c_echo(char **args);
 
 
 /* List of builtin commands */
-char *builtin_str[] = {
+char *builtin_str[] = 
+{
   "cd",
   "help",
   "exit",
@@ -305,7 +306,8 @@ void c_loop(void)
 
     do 
     {
-        if (isatty(STDIN_FILENO)) {
+        if (isatty(STDIN_FILENO)) 
+        {
             printf("> ");
         }
         line = c_read_line();
@@ -324,11 +326,29 @@ void c_loop(void)
  * @param argv Argument vector
  * @return status code
  */
-int main(int argc, char **argv)
-{
-    //Load configuration files (TBD)
+int main(int argc, char **argv) {
+    FILE* file = fopen("input.txt", "r");
+    char line[256];
+    char **args;
 
-    //Call looping function
+    // starts automated shell
+    if (file != NULL) 
+    {
+        while (fgets(line, sizeof(line), file)) 
+        {
+            line[strcspn(line, "\n")] = 0;
+            args = c_split_line(line);
+            c_execute(args);
+            free(args);
+        }
+        fclose(file);
+    } 
+    else 
+    {
+        fprintf(stderr, "Unable to open file\n");
+    }
+
+    // Starts interactive shell
     c_loop();
 
     return EXIT_SUCCESS;

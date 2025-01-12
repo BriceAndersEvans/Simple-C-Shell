@@ -1,0 +1,6 @@
+help
+pwd
+cd /
+pwd
+echo Hello, World!
+exit
